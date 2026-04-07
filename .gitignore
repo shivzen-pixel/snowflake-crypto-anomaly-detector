@@ -1,0 +1,8 @@
+venv/
+.env
+*.jsonl
+logs/
+__pycache__/
+*.pyc
+.DS_Store
+data/raw_messages.jsonl

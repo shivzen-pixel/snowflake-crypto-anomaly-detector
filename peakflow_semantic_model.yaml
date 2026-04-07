@@ -1,0 +1,128 @@
+name: PeakFlow Market Intelligence
+description: Semantic model for querying crypto market anomalies and feed health
+tables:
+  - name: ANOMALY_INCIDENTS
+    description: Grouped anomaly incidents detected in crypto market feeds
+    base_table:
+      database: PEAKFLOW_DB
+      schema: GOLD
+      table: ANOMALY_INCIDENTS
+    dimensions:
+      - name: product_id
+        description: Crypto product e.g. BTC-USD ETH-USD SOL-USD
+        expr: PRODUCT_ID
+        data_type: VARCHAR
+      - name: severity
+        description: Severity level of the incident WARNING or CRITICAL
+        expr: SEVERITY
+        data_type: VARCHAR
+      - name: anomaly_reasons
+        description: Reasons flagged e.g. ISOLATION_FOREST VOLUME_SPIKE STALE_FEED
+        expr: ANOMALY_REASONS
+        data_type: VARCHAR
+      - name: label
+        description: AI classification TRUE_MARKET_MOVE STALE_FEED MISSING_DATA DUPLICATE_DATA UNCERTAIN
+        expr: EXPLANATION:label::string
+        data_type: VARCHAR
+      - name: suggested_action
+        description: AI suggested action monitor investigate escalate ignore
+        expr: EXPLANATION:suggested_action::string
+        data_type: VARCHAR
+    time_dimensions:
+      - name: incident_start_ts
+        description: When the incident started
+        expr: INCIDENT_START_TS
+        data_type: TIMESTAMP
+      - name: incident_end_ts
+        description: When the incident ended
+        expr: INCIDENT_END_TS
+        data_type: TIMESTAMP
+    measures:
+      - name: incident_count
+        description: Total number of incidents
+        expr: COUNT(*)
+        data_type: NUMBER
+      - name: avg_duration_minutes
+        description: Average duration of incidents in minutes
+        expr: AVG(DURATION_MINUTES)
+        data_type: FLOAT
+      - name: avg_trade_count
+        description: Average trade count during incident
+        expr: AVG(AVG_TRADE_COUNT)
+        data_type: FLOAT
+      - name: max_z_score
+        description: Maximum volume z-score during incident
+        expr: MAX(MAX_Z_SCORE_VOLUME)
+        data_type: FLOAT
+
+  - name: ANOMALY_SCORES
+    description: Individual anomaly scores per 5-minute feature window
+    base_table:
+      database: PEAKFLOW_DB
+      schema: GOLD
+      table: ANOMALY_SCORES
+    dimensions:
+      - name: product_id
+        description: Crypto product e.g. BTC-USD ETH-USD SOL-USD
+        expr: PRODUCT_ID
+        data_type: VARCHAR
+      - name: severity
+        description: Severity level NORMAL WARNING CRITICAL
+        expr: SEVERITY
+        data_type: VARCHAR
+      - name: is_anomaly
+        description: Whether this window was flagged as anomalous
+        expr: IS_ANOMALY
+        data_type: BOOLEAN
+      - name: anomaly_reasons
+        description: Specific reasons for anomaly flag
+        expr: ANOMALY_REASONS
+        data_type: VARCHAR
+    time_dimensions:
+      - name: feature_minute
+        description: The 5-minute window being scored
+        expr: FEATURE_MINUTE
+        data_type: TIMESTAMP
+    measures:
+      - name: score_count
+        description: Total number of scored windows
+        expr: COUNT(*)
+        data_type: NUMBER
+      - name: anomaly_count
+        description: Total anomalous windows
+        expr: SUM(CASE WHEN IS_ANOMALY THEN 1 ELSE 0 END)
+        data_type: NUMBER
+      - name: avg_z_score_volume
+        description: Average volume z-score
+        expr: AVG(Z_SCORE_VOLUME)
+        data_type: FLOAT
+
+  - name: FEED_HEALTH
+    description: Per-minute feed health metrics per product
+    base_table:
+      database: PEAKFLOW_DB
+      schema: SILVER
+      table: DT_FEED_HEALTH_1M
+    dimensions:
+      - name: product_id
+        description: Crypto product being monitored
+        expr: PRODUCT_ID
+        data_type: VARCHAR
+    time_dimensions:
+      - name: health_minute
+        description: The minute being measured
+        expr: HEALTH_MINUTE
+        data_type: TIMESTAMP
+    measures:
+      - name: avg_freshness_lag
+        description: Average seconds between trade time and receipt
+        expr: AVG(AVG_FRESHNESS_LAG_SEC)
+        data_type: FLOAT
+      - name: total_duplicates
+        description: Total duplicate trades detected
+        expr: SUM(DUPLICATE_COUNT)
+        data_type: NUMBER
+      - name: total_gaps
+        description: Total feed gaps detected
+        expr: SUM(GAP_COUNT)
+        data_type: NUMBER
