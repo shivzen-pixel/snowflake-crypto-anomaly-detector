@@ -6,17 +6,7 @@ A production-grade, end-to-end data pipeline built entirely inside Snowflake tha
 
 ## 🏗️ Architecture
 
-```mermaid
-flowchart TD
-    A[Coinbase WebSocket\nBTC/ETH/SOL-USD] -->|Live trades & heartbeats| B[RAW Schema\nMARKET_EVENTS\nHEARTBEATS]
-    B -->|Snowpark validation procedure| C[BRONZE Schema\nNORMALIZED_EVENTS\nQUARANTINE]
-    C -->|Dynamic Tables| D[SILVER Schema\nDT_TRADES_1S\nDT_CANDLES_1M\nDT_FEED_HEALTH_1M\nDT_FEATURES_5M]
-    D -->|Isolation Forest + Z-score| E[GOLD Schema\nSEASONAL_BASELINE\nANOMALY_SCORES\nANOMALY_INCIDENTS]
-    E -->|Cortex AI| F[AI Schema\nDAILY_SUMMARIES]
-    E -->|Streamlit| G[Dashboard\n5 Pages]
-    H[APP Schema\nCortex Analyst\nSemantic Model] --> G
-    I[OPS Schema\nProcedures + Tasks\nEmail Alerts] --> E
-```
+![Architecture Diagram](screenshots/peakflow_pipeline_architecture_1_.svg)
 
 ---
 
